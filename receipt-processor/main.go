@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -16,16 +17,16 @@ import (
 var receiptStore = make(map[string]Receipt)
 
 type Receipt struct {
-	Retailer     string  `json:"retailer"`
-	PurchaseDate string  `json:"purchaseDate"`
-	PurchaseTime string  `json:"purchaseTime"`
-	Items        []Item  `json:"items"`
-	Total        float64 `json:"total"`
+	Retailer     string `json:"retailer"`
+	PurchaseDate string `json:"purchaseDate"`
+	PurchaseTime string `json:"purchaseTime"`
+	Items        []Item `json:"items"`
+	Total        string `json:"total"`
 }
 
 type Item struct {
-	ShortDescription string  `json:"shortDescription"`
-	Price            float64 `json:"price"`
+	ShortDescription string `json:"shortDescription"`
+	Price            string `json:"price"`
 }
 
 func main() {
@@ -41,7 +42,6 @@ func setupRouter() *mux.Router {
 	router.HandleFunc("/", serveHomePage).Methods("GET")
 	router.HandleFunc("/receipts/process", processReceipt).Methods("POST")
 	router.HandleFunc("/receipts/{id}/points", getPoints).Methods("GET")
-
 	return router
 }
 
@@ -56,6 +56,31 @@ func processReceipt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Calculate the sum of item prices
+	var totalCalculated float64
+	for _, item := range receipt.Items {
+		price, err := strconv.ParseFloat(item.Price, 64)
+		if err != nil {
+			http.Error(w, "Invalid price format", http.StatusBadRequest)
+			return
+		}
+		totalCalculated += price
+	}
+
+	// Convert the total from string to float
+	total, err := strconv.ParseFloat(receipt.Total, 64)
+	if err != nil {
+		http.Error(w, "Invalid total price format", http.StatusBadRequest)
+		return
+	}
+
+	// Check if the calculated total matches the provided total
+	if math.Abs(totalCalculated-total) > 0.01 { // Allow for small floating-point discrepancies
+		http.Error(w, "Incorrect JSON: Prices do not match the total price", http.StatusBadRequest)
+		return
+	}
+
+	// Proceed with storing the receipt if the totals match
 	receiptID := uuid.New().String()
 	receiptStore[receiptID] = receipt
 	jsonResponse(w, map[string]string{"id": receiptID})
@@ -99,8 +124,13 @@ func alphanumericPoints(name string) int {
 	return points
 }
 
-func roundTotalPoints(total float64) int {
+func roundTotalPoints(totalStr string) int {
 	points := 0
+	total, err := strconv.ParseFloat(totalStr, 64)
+
+	if err != nil {
+		return points
+	}
 	if total == math.Floor(total) {
 		points += 50
 	}
@@ -114,8 +144,13 @@ func itemPoints(items []Item) int {
 	points := 0
 	points += (len(items) / 2) * 5
 	for _, item := range items {
+		price, err := strconv.ParseFloat(item.Price, 64)
+		if err != nil {
+			continue
+		}
+
 		if len(strings.TrimSpace(item.ShortDescription))%3 == 0 {
-			points += int(math.Ceil(item.Price * 0.2))
+			points += int(math.Ceil(price * 0.2))
 		}
 	}
 	return points

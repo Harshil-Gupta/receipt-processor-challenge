@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <link rel="stylesheet" href="/static/styles.css">
     <meta charset="UTF-8">
@@ -16,13 +15,17 @@
         <form id="receiptForm">
             <label for="receiptData">Receipt JSON:</label>
             <textarea id="receiptData"
-                placeholder='{"retailer": "Target", "purchaseDate": "2023-11-08", "purchaseTime": "15:30", "items": [{"shortDescription": "Milk", "price": 2.99}], "total": 2.99}'></textarea>
+                placeholder='{"retailer": "Target", "purchaseDate": "2023-11-08", "purchaseTime": "15:30", "items": [{"shortDescription": "Milk", "price": "2.99"}], "total": "2.99"}'></textarea>
             <button type="button" onclick="getPoints()">Get Points</button>
         </form>
 
         <div id="result" class="result" style="display:none;"></div>
         <div id="error" class="error" style="display:none;"></div>
+
+        <h2>Lookup Points by Transaction ID</h2>
+        <input type="text" id="transactionIdInput" placeholder="Enter Transaction ID">
+        <button type="button" onclick="getPointsById()">Get Points by ID</button>
+        <div id="fetchResult" class="fetchResult"></div>
     </div>
 </body>
-
 </html>
