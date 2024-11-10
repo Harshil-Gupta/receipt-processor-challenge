@@ -1,0 +1,6 @@
+1. No O/P on clicking get points by id [JS, HTML issue]
+2. Test scenarios in GO code 
+  2.1 (if item price total != total price)
+  2.2 (json errors)
+  2.3 (what to do when no items in list)
+3. Final test on examples given
