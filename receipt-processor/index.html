@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="stylesheet" href="/static/styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harshil's Store</title>
 </head>
+
 <body>
     <h1>Welcome to Harshil's Store</h1>
     <script src="/static/script.js"></script>
@@ -15,17 +17,23 @@
         <form id="receiptForm">
             <label for="receiptData">Receipt JSON:</label>
             <textarea id="receiptData"
-                placeholder='{"retailer": "Target", "purchaseDate": "2023-11-08", "purchaseTime": "15:30", "items": [{"shortDescription": "Milk", "price": "2.99"}], "total": "2.99"}'></textarea>
+                placeholder='{"retailer": "Target", "purchaseDate": "2023-11-11", "purchaseTime": "15:30", "items": [{"shortDescription": "Milk", "price": "2.99"}], "total": "2.99"}'></textarea>
             <button type="button" onclick="getPoints()">Get Points</button>
         </form>
+        <div id="result" class="result" style="display: none;"></div>
+        <div id="error" class="error" style="display: none;"></div>
+        <br><br>
 
-        <div id="result" class="result" style="display:none;"></div>
-        <div id="error" class="error" style="display:none;"></div>
-
-        <h2>Lookup Points by Transaction ID</h2>
-        <input type="text" id="transactionIdInput" placeholder="Enter Transaction ID">
-        <button type="button" onclick="getPointsById()">Get Points by ID</button>
-        <div id="fetchResult" class="fetchResult"></div>
+        <h3>Lookup Points by Transaction ID</h3>
+        <form id="transactionIdInputForm">
+            <label for="transactionIdInput">Enter Transaction ID:</label>
+            <textarea id="transactionIdInput"
+                placeholder='Sample ID: 68142957-9770-4d7a-b7ea-3507405b315e'></textarea>
+            <button type="button" onclick="getPointsById()">Get Points by ID</button>
+        </form>
+        <div id="fetchResult" class="fetchResult" style="display: none;"></div>
+        <div id="fetchResultError" class="fetchResultError" style="display: none;"></div>
     </div>
 </body>
+
 </html>

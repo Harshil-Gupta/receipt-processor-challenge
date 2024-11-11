@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"log"
 	"math"
 	"net/http"
@@ -12,6 +10,9 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 var receiptStore = make(map[string]Receipt)
@@ -38,7 +39,7 @@ func main() {
 func setupRouter() *mux.Router {
 	router := mux.NewRouter()
 
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./receipt-processor/receipt-processor/static"))))
 	router.HandleFunc("/", serveHomePage).Methods("GET")
 	router.HandleFunc("/receipts/process", processReceipt).Methods("POST")
 	router.HandleFunc("/receipts/{id}/points", getPoints).Methods("GET")
@@ -56,7 +57,20 @@ func processReceipt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Calculate the sum of item prices
+	// Check if any required fields are missing
+	if receipt.Retailer == "" || receipt.PurchaseDate == "" || receipt.PurchaseTime == "" || receipt.Total == "" || len(receipt.Items) == 0 {
+		http.Error(w, `{"error": "Missing required fields in the receipt."}`, http.StatusBadRequest)
+		return
+	}
+
+	// Check if any item is missing the required Price field
+	for _, item := range receipt.Items {
+		if item.Price == "" || item.ShortDescription == "" {
+			http.Error(w, `{"error": "Missing required fields in items"}`, http.StatusBadRequest)
+			return
+		}
+	}
+
 	var totalCalculated float64
 	for _, item := range receipt.Items {
 		price, err := strconv.ParseFloat(item.Price, 64)
@@ -73,14 +87,11 @@ func processReceipt(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid total price format", http.StatusBadRequest)
 		return
 	}
-
-	// Check if the calculated total matches the provided total
 	if math.Abs(totalCalculated-total) > 0.01 { // Allow for small floating-point discrepancies
 		http.Error(w, "Incorrect JSON: Prices do not match the total price", http.StatusBadRequest)
 		return
 	}
 
-	// Proceed with storing the receipt if the totals match
 	receiptID := uuid.New().String()
 	receiptStore[receiptID] = receipt
 	jsonResponse(w, map[string]string{"id": receiptID})
