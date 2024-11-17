@@ -1,39 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <link rel="stylesheet" href="/static/styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Harshil's Store</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            font-size: 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
 </head>
-
 <body>
     <h1>Welcome to Harshil's Store</h1>
-    <script src="/static/script.js"></script>
     <div class="container">
         <h2>Enter Receipt JSON</h2>
         <p>Provide the receipt details in JSON format to calculate points.</p>
         <form id="receiptForm">
             <label for="receiptData">Receipt JSON:</label>
-            <textarea id="receiptData"
-                placeholder='{"retailer": "Target", "purchaseDate": "2023-11-11", "purchaseTime": "15:30", "items": [{"shortDescription": "Milk", "price": "2.99"}], "total": "2.99"}'></textarea>
+            <textarea id="receiptData" placeholder='{"retailer": "Target", "purchaseDate": "2023-11-08", "purchaseTime": "15:30", "items": [{"shortDescription": "Milk", "price": 2.99}], "total": 2.99}'></textarea>
             <button type="button" onclick="getPoints()">Get Points</button>
         </form>
-        <div id="result" class="result" style="display: none;"></div>
-        <div id="error" class="error" style="display: none;"></div>
-        <br><br>
-
-        <h3>Lookup Points by Transaction ID</h3>
-        <form id="transactionIdInputForm">
-            <label for="transactionIdInput">Enter Transaction ID:</label>
-            <textarea id="transactionIdInput"
-                placeholder='Sample ID: 68142957-9770-4d7a-b7ea-3507405b315e'></textarea>
-            <button type="button" onclick="getPointsById()">Get Points by ID</button>
-        </form>
-        <div id="fetchResult" class="fetchResult" style="display: none;"></div>
-        <div id="fetchResultError" class="fetchResultError" style="display: none;"></div>
+        <div id="result" class="result" style="display:none;"></div>
+        <div id="error" class="error" style="display:none;"></div>
     </div>
+    <script>
+        function getPoints() {
+            var receiptData = document.getElementById('receiptData').value;
+            var resultDiv = document.getElementById('result');
+            var errorDiv = document.getElementById('error');
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            try {
+                // Parse the JSON input
+                var receipt = JSON.parse(receiptData);
+                
+                // Send the receipt data to the backend
+                fetch('http://localhost:8080/receipts/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(receipt),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    var receiptId = data.id;
+                    fetch(`http://localhost:8080/receipts/${receiptId}/points`)
+                    .then(response => response.json())
+                    .then(data => {
+                        resultDiv.style.display = 'block';
+                        resultDiv.innerHTML = `Points: ${data.points}`;
+                    })
+                    .catch(error => {
+                        errorDiv.style.display = 'block';
+                        errorDiv.innerHTML = 'Error fetching points. Please try again later.';
+                    });
+                })
+                .catch(error => {
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerHTML = 'Error processing receipt. Please check the JSON format and try again.';
+                });
+            } catch (error) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = 'Invalid JSON format.';
+            }
+        }
+    </script>
 </body>
-
 </html>
