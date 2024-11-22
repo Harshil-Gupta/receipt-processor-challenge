@@ -1,4 +1,4 @@
-module receipt-processor
+module fetchUpdated
 
 go 1.23.3
 
